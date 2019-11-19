@@ -1,0 +1,39 @@
+#lang racket
+
+(require parser-tools/lex
+         (prefix-in : parser-tools/lex-sre))
+
+(provide (all-defined-out))
+
+(define-empty-tokens bool-values (TRUE FALSE))
+(define-empty-tokens parens (LEFTPAREN RIGHTPAREN))
+(define-empty-tokens bool-operators (AND OR NOT))
+(define-empty-tokens end-of-file (EOF))
+
+(define myLexer
+  (lexer
+   [#\(       (token-LEFTPAREN)]
+   [#\)       (token-RIGHTPAREN)]
+   ["and"     (token-AND)]
+   ["or"      (token-OR)]
+   ["not"     (token-NOT)]
+   ["true"    (token-TRUE)]
+   ["false"   (token-FALSE)]
+   [whitespace (myLexer input-port)]
+   [(eof)     (token-EOF)]
+   ))
+
+(define (get-tokenizer in)
+  (lambda () (mylexer in)))
+
+(define (lex in)
+  (let ([tokenizer (get-tokenizer in)])
+    (define (lex-function)
+      (let ([tok (tokenizer)])
+        (cond
+          [(eq? tok (token_EOF)) null]
+          [else (cons tok (lex-function))])))
+    (lex-function)))
+    
+(define (lexstr str)
+  (lex (open-input-string str)))

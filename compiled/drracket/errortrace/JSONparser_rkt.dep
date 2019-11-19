@@ -1,0 +1,1 @@
+("7.4" racket ("fdc28f0587a4743560cb294b1eae4f0fb1b73b88" . "ce051b3ffea53cafbbec9e70aa6f1b33918ebbad") #"C:\\Racket Programs\\JSONlexer.rkt" (collects #"errortrace" #"errortrace-key.rkt") (collects #"parser-tools" #"lex.rkt") (collects #"parser-tools" #"yacc.rkt") (collects #"racket" #"main.rkt") (collects #"racket" #"runtime-config.rkt"))

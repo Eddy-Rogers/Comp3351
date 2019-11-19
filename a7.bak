@@ -1,0 +1,6 @@
+#lang racket
+
+(define (allTrue aList)
+  if (empty? aList)
+  #t
+  else (and (first aList) (allTrue (rest aList))))

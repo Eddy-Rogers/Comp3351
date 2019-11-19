@@ -1,0 +1,23 @@
+#lang racket
+
+(require parser-tools/yacc
+         (prefix-in lex: parser-tools/lex)
+         "C:\Racket Programs\BoolLanguage.rkt")
+
+(provide (all-defined-out))
+
+(define myparser
+  (parser
+   (start expr)
+   (end EOF)
+   (tokens bool-values
+           parens
+           bool-operators
+           end-of-file)
+   (grammar
+    (expr [(TRUE) ????]
+          [(FALSE) ????]
+          [(LEFTPAREN NOT expr RIGHTPAREN) ????]
+          [(LEFTPAREN expr AND expr RIGHTPAREN) ????]
+          [(LEFTPAREN expr OR expr RIGHTPAREN) ????]
+          ))))

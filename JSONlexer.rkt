@@ -1,0 +1,72 @@
+;@author Eddy Rogers
+#lang racket
+
+(require parser-tools/lex
+         (prefix-in : parser-tools/lex-sre))
+
+(provide (all-defined-out))
+
+;Empty token definitions
+(define-empty-tokens bool-values (TRUE FALSE))
+(define-empty-tokens nulls (NULL))
+(define-empty-tokens brackets (LEFTSQR RIGHTSQR LEFTCRLY RIGHTCRLY))
+(define-empty-tokens quotations (QUOTE))
+(define-empty-tokens commas (COMMA))
+(define-empty-tokens connectives (COLON))
+(define-empty-tokens end-of-file (EOF))
+
+;Non-empty token definitions
+(define-tokens strings (STRING))
+(define-tokens numbers (NUMBER))
+
+(define mylexer
+  (lexer
+   ;All characters below are recognized by the lexer, and transformed into tokens
+   [#\]       (token-RIGHTSQR)]
+   [#\[       (token-LEFTSQR)]
+   [#\}       (token-RIGHTCRLY)]
+   [#\{       (token-LEFTCRLY)]
+   [#\"       (token-QUOTE)]
+   [#\,       (token-COMMA)]
+   [#\:       (token-COLON)]
+   ["true"    (token-TRUE)]
+   ["false"   (token-FALSE)]
+   ["null"    (token-NULL)]
+
+   ;A number can be negative, 0, any number starting with 1-9 followed by any number of 0-9 characters, or a float
+   [(:: (:? #\-) (:or #\0 (:: (char-range #\1 #\9) (:* numeric))) (:? (:: #\. (:+ numeric))) (:? (:: (:or "e" "E") (:? #\-) (char-range #\1 #\9) (:* numeric)))) (token-NUMBER lexeme)]
+
+   ;A string is any number of characters (not including quotes) or an escaped \", surrounded by quotes
+   [(:: #\" (:* (:or (intersection any-char (:~ #\")) "\\\"" "\\\\" "\\/" "\\\b" "\\\n" "\\\f" "\\\r" "\\\t" (:or "\\u" (:= 4 #\A #\B #\C #\D #\E #\F #\G)))) #\" ) (token-STRING lexeme)]
+
+   ;Token for whitespace
+   [whitespace (mylexer input-port)]
+
+   ;Token for the end of the file
+   [(eof)     (token-EOF)]
+   ))
+
+(define (get-tokenizer in)
+  (lambda () (mylexer in)))
+
+(define (lex in)
+  (let ([tokenizer (get-tokenizer in)])
+    (define (lex-function)
+      (let ([tok (tokenizer)])
+        (cond
+          [(eq? tok (token-EOF)) null]
+          [else (cons tok (lex-function))])))
+    (lex-function)))
+    
+(define (lexstr str)
+  (lex (open-input-string str)))
+
+;Function name: lexfile
+;Return type: A list of tokens
+;Function parameters: The name of the file to lex through
+;Returns: A list all identified tokens in the given file
+(define (lexfile filename)
+  (let ([input (open-input-file filename)])
+    (lex input)))
+
+(define example (open-input-string "(not true)"))
