@@ -76,12 +76,8 @@
    [#\]                                             (token-RIGHTBRACKET)]
    [#\>                                             (token-GREATERTHAN)]
    [(:+ #\newline)                                  (token-NEWLINE)]
-   
    ;;; TODO: add Paper, Pen, Line and Set
-   [(:or "PAPER" "Paper")                           (token-PAPER)]
-   [(:or "PEN" "Pen")                               (token-PEN)]
-   [(:or "LINE" "Line")                             (token-LINE)]
-   [(:or "SET" "Set")                               (token-SET)]
+
    
    [(:or "REPEAT" "Repeat")                         (token-REPEAT)]
    [(:or "FOREVER" "Forever")                       (token-FOREVER)]
@@ -102,12 +98,11 @@
    [(:or "ANTIALIAS" "Antialias")                   (token-ANTIALIAS)]
    
    ;;; TODO: Add numbers, which should be a token-NUMERICVALUE and contain an actual number, not a string
-   [(:+ numeric) (token-NUMERICVALUE (string->number lexeme))]
+
 
    ; identifiers
    ;;; TODO: Add identifiers, which should be a token-IDENTIFIER and contain the lexeme
-   [(:: alphabetic (:* (:or numeric alphabetic))) (token-IDENTIFIER lexeme)]
-   
+
    ; comments
    [(:: "//" (:* (char-complement (:or #\newline #\linefeed)))
         (:+ (:or #\newline #\linefeed))) (return-without-pos (dbnlexer input-port))]
