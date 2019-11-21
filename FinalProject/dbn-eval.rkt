@@ -24,6 +24,8 @@
 
 ; evaluate a file
 (define (eval-file filename [env #f] [run-sim #t] [clear? #t])
+
+
   (let ([in (open-input-file filename)])
     (run-paper-sim)
     (eval-dbn in env run-sim clear?)
@@ -85,7 +87,7 @@
     [(print-expr exp) (printf "~a~n" (eval-expr env exp)) env]
 
     ; TODO: Add Line expressions
-    [(line-expr x1 y1 x2 y2) (draw-line (eval-expr env x1) (eval-expr env y1) (eval-expr env x2) (eval-expr env y2))]
+    [(line-expr x1 y1 x2 y2) (draw-line (eval-expr env x1) (eval-expr env y1) (eval-expr env x2) (eval-expr env y2)) env]
     
     ; Assignment to a paper location, this is a special case
     [(assignment-expr (get-paper-loc x y) color)
@@ -100,10 +102,10 @@
     ;;; TODO: Add variable assignment, this requires using the environment
     ;;;       to see if it's there and creating it if it's not
     [(assignment-expr varName value)
-     (let ([variable (apply-env env varName)])
-       (if (equal? variable #f)
-           (extend-env env varName value)
-           (setref! variable value)))]
+     (let ([variable (apply-env env (var-expr-name varName))])
+       (if variable
+           ((lambda () (setref! variable (eval-expr env value)) env))
+           (extend-env env (var-expr-name varName) (eval-expr env value))))]
     
     
     ; the antialias expression, for setting up antialias stuff
@@ -196,20 +198,15 @@
            (error (string-append "Function " sym " not defined"))
            (let [(parameters (match (deref function)
                   [(closure sym params body env) params]))]
-             (let [(extendedEnv (append env (map (lambda (x y) (extend-env env x y)) (eval-params env exprs) parameters)))]
-               (eval-statement extendedEnv (match (deref function) [(closure sym params body env) body]))))))]
+             (let [(extendedEnv (map (lambda (x y) (cons x (memref x (eval-expr env y)))) parameters exprs))]
+               (eval-statements (append extendedEnv env) (match (deref function) [(closure sym params body env) body]) slow?)
+               env))))]
              
      ; evaluate all the arugments, then call the function
          
        ; return the previous environment to be carried along
 
     ))
-
-; Helper function to support apply-expr
-(define (eval-params env expList)
-  (if (empty? expList)
-      empty
-      (append (list (eval-statement env (first expList))) (eval-params (rest expList)))))
       
 
 (define (eval-expr env expr)
@@ -266,6 +263,15 @@
     ; handle function application as an expression, these we care about the return value
     ;;; TODO: function application as an expression (not a statement)--you should return
     ; the result of the evaluation of all the statements in the body
+    [(apply-expr sym exprs)
+     (let ([function (apply-env env sym)])
+       ; make sure we found it, or return an error otherwise
+       (if (equal? function #f)
+           (error (string-append "Function " sym " not defined"))
+           (let [(parameters (match (deref function)
+                  [(closure sym params body env) params]))]
+             (let [(extendedEnv (map (lambda (x y) (cons x (memref x (eval-expr env y)))) parameters exprs))]
+               (eval-statements (append env extendedEnv) (match (deref function) [(closure sym params body env) body]))))))]
     ; [(apply-expr sym exprs)
      ; evaluate all the arugments, then call the function
          ; make sure we found it, or return an error otherwise

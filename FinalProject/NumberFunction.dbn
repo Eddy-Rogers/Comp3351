@@ -1,0 +1,10 @@
+Paper 0
+
+Set A 40
+
+Number MyFunction MyVal
+{
+  Value MyVal
+}
+
+Line <MyFunction A> <MyFunction A> 100 100
