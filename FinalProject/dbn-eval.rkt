@@ -103,8 +103,11 @@
     ;;;       to see if it's there and creating it if it's not
     [(assignment-expr varName value)
      (let ([variable (apply-env env (var-expr-name varName))])
+       ;Check if the variable is present in the current environment
        (if variable
+           ;If it is, then set the reference of the variable to the new value
            ((lambda () (setref! variable (eval-expr env value)) env))
+           ;Otherwise, extend the environment with the name and the value
            (extend-env env (var-expr-name varName) (eval-expr env value))))]
     
     
