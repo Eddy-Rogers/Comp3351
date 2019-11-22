@@ -1,3 +1,7 @@
+;Modifications made by Eddy Rogers on 11/19/2019
+;Modifications are indicated by the following comment:
+;-----------------------------------------------
+
 #lang racket
 
 ; needed for parsing stuff
@@ -76,12 +80,15 @@
    [#\]                                             (token-RIGHTBRACKET)]
    [#\>                                             (token-GREATERTHAN)]
    [(:+ #\newline)                                  (token-NEWLINE)]
-   
-   ;;; TODO: add Paper, Pen, Line and Set
+
+   ;-----------------------------------------------
+   ;Modification by Eddy Rogers
+   ;Add Paper, Pen, Line and Set
    [(:or "PAPER" "Paper")                           (token-PAPER)]
    [(:or "PEN" "Pen")                               (token-PEN)]
    [(:or "LINE" "Line")                             (token-LINE)]
    [(:or "SET" "Set")                               (token-SET)]
+   ;-----------------------------------------------
    
    [(:or "REPEAT" "Repeat")                         (token-REPEAT)]
    [(:or "FOREVER" "Forever")                       (token-FOREVER)]
@@ -101,11 +108,10 @@
    [(:or "NUMBER" "Number")                         (token-NUMBER)]
    [(:or "ANTIALIAS" "Antialias")                   (token-ANTIALIAS)]
    
-   ;;; TODO: Add numbers, which should be a token-NUMERICVALUE and contain an actual number, not a string
+   ;Add numbers, which should be a token-NUMERICVALUE and contain an actual number, not a string
    [(:+ numeric) (token-NUMERICVALUE (string->number lexeme))]
 
-   ; identifiers
-   ;;; TODO: Add identifiers, which should be a token-IDENTIFIER and contain the lexeme
+   ;Add identifiers, which should be a token-IDENTIFIER and contain the lexeme
    [(:: alphabetic (:* (:or numeric alphabetic))) (token-IDENTIFIER lexeme)]
    
    ; comments

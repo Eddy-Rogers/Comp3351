@@ -1,8 +1,10 @@
+;Modifications made by Eddy Rogers on 11/21/2019
+;Modifications are indicated by the following comment:
+;-----------------------------------------------
+
 #lang racket
 
 (require "dbn-ast.rkt" "dbn-parser.rkt" "papersim.rkt" "dbn-env.rkt" "dbn-errors.rkt")
-
-
 
 ; generic evaluate from an input port
 (define (eval-dbn in [env #f] [run-sim #t] [clear? #t])
@@ -86,8 +88,14 @@
     ; Print
     [(print-expr exp) (printf "~a~n" (eval-expr env exp)) env]
 
-    ; TODO: Add Line expressions
+    ;-----------------------------------------------
+    ;Modification by Eddy Rogers
+    
+    ;Line expressions - Takes 4 values as an input
+    ;Draws a line, and returns the current environment
     [(line-expr x1 y1 x2 y2) (draw-line (eval-expr env x1) (eval-expr env y1) (eval-expr env x2) (eval-expr env y2)) env]
+    
+    ;-----------------------------------------------
     
     ; Assignment to a paper location, this is a special case
     [(assignment-expr (get-paper-loc x y) color)
@@ -96,11 +104,12 @@
            [col (eval-expr env color)])
        (draw-point xcoord ycoord (dbncolor col)))
      env]
-       
 
-    ; Assignment to a variable name, need to see if it's there first
-    ;;; TODO: Add variable assignment, this requires using the environment
-    ;;;       to see if it's there and creating it if it's not
+    ;-----------------------------------------------
+    ;Modification by Eddy Rogers
+    
+    ;Variable assignment - returns the previous environment to be passed along if the variable already exists, and
+    ;The new environment if it isn't found, and a new environment must be created
     [(assignment-expr varName value)
      (let ([variable (apply-env env (var-expr-name varName))])
        ;Check if the variable is present in the current environment
@@ -109,6 +118,8 @@
            ((lambda () (setref! variable (eval-expr env value)) env))
            ;Otherwise, extend the environment with the name and the value
            (extend-env env (var-expr-name varName) (eval-expr env value))))]
+    
+    ;-----------------------------------------------
     
     
     ; the antialias expression, for setting up antialias stuff
@@ -177,38 +188,43 @@
     ; last thing done in a list of statements
     [(value-expr expr) (cons 'exit (eval-expr env expr))]
     
+    ;-----------------------------------------------
+    ;Modification by Eddy Rogers
     
-    ; to create a function, we need to create a closure and store it in the
-    ; current environment, so a new environment will be passed on here
-    ;;; TODO [(command-fun sym params body)
+    ;Command function creation- Takes a function name, function parameters, and a function body
+    ;Extends the environment with the name and function closure, returning back the extended environment
     [(command-fun sym params body)
+     ;Create a closure for the function
      (let ([functionClosure (closure sym params body env)])
+       ;Extend the environment with the function name and closure
        (extend-env env sym functionClosure))]
      
-    ; and we do the same thing for the numbers
-    ;;; TODO (Achievement) [(number-fun sym params body)
+    ;Number function creation - Takes a function name, function parameters, and a function body
+    ;Extends the environment with the name and function closure, returning back the extended environment
     [(number-fun sym params body)
+     ;Create a closure for the function
      (let ([functionClosure (closure sym params body env)])
+       ;Extend the environment with the function name and closure
        (extend-env env sym functionClosure))]
-     
 
-    ; now for expressions as statements, these we ignore the return value of
-    ;;; TODO: application as statements, I've left some comments to help you along
+    ;Expressions as statements - ignore the return value and return back the previous environment to be carried along
     [(apply-expr sym exprs)
+     ;Attempt to find the function in the current environment
      (let ([function (apply-env env sym)])
-       ; make sure we found it, or return an error otherwise
+       ;Make sure we found it, or return an error otherwise
        (if (equal? function #f)
            (error (string-append "Function " sym " not defined"))
            (let [(parameters (match (deref function)
                   [(closure sym params body env) params]))]
+             ;Retrieve all the arugments from the input and the closure
              (let [(extendedEnv (map (lambda (x y) (cons x (memref x (eval-expr env y)))) parameters exprs))]
+               ;Append the new environment and call the function
                (eval-statements (append extendedEnv env) (match (deref function) [(closure sym params body env) body]) slow?)
+               ;Return the previous environment to be carried along
                env))))]
-             
-     ; evaluate all the arugments, then call the function
-         
-       ; return the previous environment to be carried along
-
+    
+    ;-----------------------------------------------
+    
     ))
       
 
@@ -262,24 +278,22 @@
              [(= val 4) (get-time 'milliseconds)]
              [else (error "Expected a Time range from 1 to 4 inclusive, got " val " instead")]))]
                         
-
-    ; handle function application as an expression, these we care about the return value
-    ;;; TODO: function application as an expression (not a statement)--you should return
-    ; the result of the evaluation of all the statements in the body
+    ;-----------------------------------------------
+    ;Modification by Eddy Rogers
+    
+    ;Function application as an expression - returns the result of the evaluation of all the statements in the body
     [(apply-expr sym exprs)
+     ;Attempt to find the function in the current environment
      (let ([function (apply-env env sym)])
-       ; make sure we found it, or return an error otherwise
+       ;Make sure we found it, or return an error otherwise
        (if (equal? function #f)
            (error (string-append "Function " sym " not defined"))
            (let [(parameters (match (deref function)
                   [(closure sym params body env) params]))]
+             ;Retrieve all the arugments from the input and the closure
              (let [(extendedEnv (map (lambda (x y) (cons x (memref x (eval-expr env y)))) parameters exprs))]
+               ;Append the new environment and call the function, returning the result of the evalution of all the statements in the body
                (eval-statements (append env extendedEnv) (match (deref function) [(closure sym params body env) body]))))))]
-    ; [(apply-expr sym exprs)
-     ; evaluate all the arugments, then call the function
-         ; make sure we found it, or return an error otherwise
-                  ; grab the closure from the environment, which has parameters
-                     ; then evaluate all the statements and return the result
+    
+    ;-----------------------------------------------
     ))
-  
-  
